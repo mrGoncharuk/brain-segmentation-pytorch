@@ -1,18 +1,19 @@
 import os
 import random
 
+import nibabel as nib
 import numpy as np
 import torch
 from skimage.io import imread
 from torch.utils.data import Dataset
 
-from utils import crop_sample, pad_sample, resize_sample, normalize_volume
+from utils import crop_sample, pad_sample, resize_sample, normalize_volume, normalize_to_uint8
 
 
 class BrainSegmentationDataset(Dataset):
     """Brain MRI dataset for FLAIR abnormality segmentation"""
 
-    in_channels = 3
+    in_channels = 2
     out_channels = 1
 
     def __init__(
@@ -30,23 +31,49 @@ class BrainSegmentationDataset(Dataset):
         # read images
         volumes = {}
         masks = {}
+        adc_paths =[]
+        dwi_paths = []
+        flair_paths = []
+        mask_paths = []
         print("reading {} images...".format(subset))
         for (dirpath, dirnames, filenames) in os.walk(images_dir):
-            image_slices = []
-            mask_slices = []
             for filename in sorted(
-                filter(lambda f: ".tif" in f, filenames),
-                key=lambda x: int(x.split(".")[-2].split("_")[4]),
+                filter(lambda f: ".nii.gz" in f, filenames),
+                key=lambda x: int(x.split("_")[0][-4:]),
             ):
                 filepath = os.path.join(dirpath, filename)
-                if "mask" in filename:
-                    mask_slices.append(imread(filepath, as_gray=True))
-                else:
-                    image_slices.append(imread(filepath))
-            if len(image_slices) > 0:
-                patient_id = dirpath.split("/")[-1]
-                volumes[patient_id] = np.array(image_slices[1:-1])
-                masks[patient_id] = np.array(mask_slices[1:-1])
+                if "adc" in filename:
+                    adc_paths.append(filepath)
+                elif "dwi" in filename:
+                    dwi_paths.append(filepath)
+                elif "flair" in filename:
+                    flair_paths.append(filepath)
+                elif "msk" in filename:
+                    mask_paths.append(filepath)
+                           
+        adc_paths.sort()
+        dwi_paths.sort()
+        flair_paths.sort()
+        mask_paths.sort()
+        for i in range(len(adc_paths)):
+            raw_adc_image = nib.load(adc_paths[i]).get_fdata()
+            raw_dwi_image = nib.load(dwi_paths[i]).get_fdata()
+            raw_mask_image = nib.load(mask_paths[i]).get_fdata()
+
+            transformed_adc = np.transpose(raw_adc_image, (2, 0, 1))
+            transformed_dwi = np.transpose(raw_dwi_image, (2, 0, 1))
+            transformed_mask = np.transpose(raw_mask_image, (2, 0, 1))
+            
+            normalized_adc = normalize_to_uint8(transformed_adc)
+            normalized_dwi = normalize_to_uint8(transformed_dwi)
+            normalized_mask = normalize_to_uint8(transformed_mask)
+
+            combined_volume = np.stack((normalized_adc, normalized_dwi), axis=-1)
+            
+            case_id = adc_paths[i].split("/")[2]
+            volumes[case_id] = np.array(combined_volume[10:-10])
+            masks[case_id] = np.array(normalized_mask[10:-10])
+
 
         self.patients = sorted(volumes)
 

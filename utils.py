@@ -83,6 +83,14 @@ def normalize_volume(volume):
     volume = (volume - m) / s
     return volume
 
+def normalize_to_uint8(volume):
+    min_val = np.min(volume)
+    max_val = np.max(volume)
+
+    normalized_volume = ((volume - min_val) / (max_val - min_val)) * 255
+    normalized_volume = normalized_volume.astype(np.uint8)
+    return volume
+
 
 def log_images(x, y_true, y_pred, channel=1):
     images = []

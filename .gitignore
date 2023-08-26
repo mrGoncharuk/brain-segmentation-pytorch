@@ -1,7 +1,11 @@
 kaggle_3m
 logs
 predictions
-
+dataset_isles22
+dataset_isles22_short
+mri
+logs_isles22
+weights_isles22
 # Created by https://www.gitignore.io/api/osx,linux,matlab,python,pycharm+all,intellij+all,jupyternotebook
 
 ### Intellij+all ###
