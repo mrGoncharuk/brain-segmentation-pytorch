@@ -9,3 +9,5 @@ scipy==1.2.1
 pandas==0.24.2
 tqdm==4.32.1
 nibabel==3.2.2
+torch==1.1.0
+torchvision==0.3.0

@@ -70,7 +70,7 @@ class BrainSegmentationDataset(Dataset):
 
             combined_volume = np.stack((normalized_adc, normalized_dwi), axis=-1)
             
-            case_id = adc_paths[i].split("/")[2]
+            case_id = adc_paths[i].split("/")[-3]
             volumes[case_id] = np.array(combined_volume[10:-10])
             masks[case_id] = np.array(normalized_mask[10:-10])
 
