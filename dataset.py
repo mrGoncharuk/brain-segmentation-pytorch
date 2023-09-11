@@ -64,7 +64,6 @@ class BrainSegmentationDataset(Dataset):
             transformed_dwi = np.transpose(raw_dwi_image, (2, 0, 1))
             transformed_mask = np.transpose(raw_mask_image, (2, 0, 1))
             
-            print(adc_paths[i])
             normalized_adc = normalize_to_uint8(transformed_adc)
             normalized_dwi = normalize_to_uint8(transformed_dwi)
             normalized_mask = normalize_to_uint8(transformed_mask)
